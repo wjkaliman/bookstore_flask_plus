@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book Nook</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{{ url_for('index') }}">Book Nook</a>
+      <nav class="tabs">
+        <a href="{{ url_for('category', category='Fiction') }}" class="tab">Fiction</a>
+        <a href="{{ url_for('category', category='Non-Fiction') }}" class="tab">Non-Fiction</a>
+        <a href="{{ url_for('category', category="Children's") }}" class="tab">Children's</a>
+      </nav>
+      <form class="search" method="get" action="{{ url_for('search') }}">
+        <input type="text" name="q" placeholder="Search books..." value="{{ request.args.get('q','') if request else '' }}">
+      </form>
+      <a class="cart-link" href="{{ url_for('cart_view') }}">🛒 Cart</a>
+    </div>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-wrap container">
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">© {{ 2025 }} Book Nook</div>
+  </footer>
+</body>
+</html>

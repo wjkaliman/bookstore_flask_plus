@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Your Cart</h2>
+{% if items %}
+<form method="post">
+  <table class="cart-table">
+    <thead>
+      <tr><th>Title</th><th>Qty</th><th>Price</th><th>Line Total</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for it in items %}
+      <tr>
+        <td>{{ it.book.title }}</td>
+        <td><input name="qty-{{ it.book.slug }}" type="number" min="0" value="{{ it.qty }}"></td>
+        <td>${{ '%.2f'|format(it.book.price) }}</td>
+        <td>${{ '%.2f'|format(it.line_total) }}</td>
+        <td>
+          <form method="post" action="{{ url_for('remove', slug=it.book.slug) }}">
+            <button class="link danger" type="submit">Remove</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <div class="cart-actions">
+    <div>
+      <form method="post" action="{{ url_for('apply_promo_route') }}" class="inline-form">
+        <input type="text" name="promo" placeholder="Promo code" value="{{ promo_code or '' }}">
+        <button class="btn secondary" type="submit">Apply</button>
+      </form>
+      {% if promo_msg %}<div class="muted">{{ promo_msg }}</div>{% endif %}
+    </div>
+    <div>
+      <button class="btn secondary" type="submit">Update Cart</button>
+      <a class="btn" href="{{ url_for('checkout') }}">Proceed to Checkout</a>
+    </div>
+  </div>
+
+  <div class="summary">
+    <p>Subtotal: <strong>${{ '%.2f'|format(subtotal) }}</strong></p>
+    <p>Discount: <strong>-${{ '%.2f'|format(discount) }}</strong></p>
+    <p>Shipping: <strong>${{ '%.2f'|format(shipping) }}</strong></p>
+    <p>Tax: <strong>${{ '%.2f'|format(tax) }}</strong></p>
+    <p class="total">Total: <strong>${{ '%.2f'|format(total) }}</strong></p>
+  </div>
+</form>
+{% else %}
+<p>Your cart is empty. Browse categories to add books!</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Checkout</h2>
+<div class="checkout-wrap">
+  <div class="order-summary">
+    <h3>Order Summary</h3>
+    <ul>
+      {% for it in items %}
+      <li>{{ it.qty }} × {{ it.book.title }} — ${{ '%.2f'|format(it.line_total) }}</li>
+      {% endfor %}
+    </ul>
+    <p>Subtotal: ${{ '%.2f'|format(subtotal) }}</p>
+    <p>Discount: -${{ '%.2f'|format(discount) }}</p>
+    <p>Shipping: ${{ '%.2f'|format(shipping) }}</p>
+    <p>Tax: ${{ '%.2f'|format(tax) }}</p>
+    <p class="total">Total: <strong>${{ '%.2f'|format(total) }}</strong></p>
+  </div>
+
+  <form method="post" class="checkout-form">
+    <label>Name
+      <input type="text" name="name" required>
+    </label>
+    <label>Email
+      <input type="email" name="email" required>
+    </label>
+    <button class="btn" type="submit">Pay Now</button>
+  </form>
+</div>
+{% endblock %}

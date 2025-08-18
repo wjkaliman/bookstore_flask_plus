@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ category }}</h2>
+<div class="grid">
+  {% for b in books %}
+  <div class="book-card">
+    <div class="cover" aria-hidden="true"></div>
+    <div class="info">
+      <h3>{{ b.title }}</h3>
+      <p class="muted">by {{ b.author }}</p>
+      <p class="price">${{ '%.2f'|format(b.price) }}</p>
+    </div>
+    <form method="post" action="{{ url_for('add_to_cart', slug=b.slug) }}">
+      <button type="submit" class="btn">Add to Cart</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Receipt</h2>
+<div class="receipt">
+  <p><strong>Order ID:</strong> {{ order.order_id }}</p>
+  <p><strong>Name:</strong> {{ order.name }}</p>
+  <p><strong>Email:</strong> {{ order.email }}</p>
+
+  <h3>Items</h3>
+  <table class="cart-table">
+    <thead><tr><th>Title</th><th>Qty</th><th>Price</th></tr></thead>
+    <tbody>
+    {% for it in items %}
+      <tr>
+        <td>{{ it.title }}</td>
+        <td>{{ it.qty }}</td>
+        <td>${{ '%.2f'|format(it.price) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="summary">
+    <p>Subtotal: ${{ '%.2f'|format(order.subtotal) }}</p>
+    <p>Discount: -${{ '%.2f'|format(order.discount) }}</p>
+    <p>Shipping: ${{ '%.2f'|format(order.shipping) }}</p>
+    <p>Tax: ${{ '%.2f'|format(order.tax) }}</p>
+    <p class="total">Total Paid: <strong>${{ '%.2f'|format(order.total) }}</strong></p>
+    {% if order.promo_code %}<p class="muted">Promo applied: {{ order.promo_code }}</p>{% endif %}
+  </div>
+  <a class="btn" href="{{ url_for('index') }}">Return to Store</a>
+</div>
+{% endblock %}

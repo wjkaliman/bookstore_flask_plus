@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Admin · Books</h2>
+<p><a class="btn" href="{{ url_for('admin_new') }}">+ New Book</a> <a class="btn secondary" href="{{ url_for('admin_logout') }}">Logout</a></p>
+<table class="cart-table">
+  <thead><tr><th>Title</th><th>Author</th><th>Category</th><th>Price</th><th>Slug</th><th></th></tr></thead>
+  <tbody>
+  {% for b in books %}
+    <tr>
+      <td>{{ b.title }}</td>
+      <td>{{ b.author }}</td>
+      <td>{{ b.category }}</td>
+      <td>${{ '%.2f'|format(b.price) }}</td>
+      <td>{{ b.slug }}</td>
+      <td>
+        <a class="link" href="{{ url_for('admin_edit', book_id=b.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('admin_delete', book_id=b.id) }}" style="display:inline-block;margin-left:0.6rem">
+          <button class="link danger" type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

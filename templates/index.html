@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="hero-text">
+    <h1>Discover your next favorite read</h1>
+    <p>Hand-picked titles across Fiction, Non-Fiction, and Children's books.</p>
+  </div>
+</section>
+
+<section class="featured">
+  <h2>Featured Book</h2>
+  <div class="book-card">
+    <div class="cover" aria-hidden="true"></div>
+    <div class="info">
+      <h3>{{ featured.title }}</h3>
+      <p class="muted">by {{ featured.author }} · {{ featured.category }}</p>
+      <p class="price">${{ '%.2f'|format(featured.price) }}</p>
+    </div>
+    <form method="post" action="{{ url_for('add_to_cart', slug=featured.slug) }}">
+      <button type="submit" class="btn">Add to Cart</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

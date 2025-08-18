@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>{{ "Edit Book" if book else "New Book" }}</h2>
+<form method="post" class="checkout-form" style="max-width: 520px">
+  <label>Title
+    <input type="text" name="title" value="{{ book.title if book else '' }}" required>
+  </label>
+  <label>Author
+    <input type="text" name="author" value="{{ book.author if book else '' }}" required>
+  </label>
+  <label>Category
+    <select name="category" required>
+      {% for c in categories %}
+      <option value="{{ c }}" {% if book and book.category==c %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Price
+    <input type="number" name="price" step="0.01" value="{{ book.price if book else '' }}" required>
+  </label>
+  <label>Slug
+    <input type="text" name="slug" value="{{ book.slug if book else '' }}">
+  </label>
+  <label>Image (static path optional)
+    <input type="text" name="image" value="{{ book.image if book else '' }}" placeholder="e.g., /static/covers/some.png">
+  </label>
+  <button class="btn" type="submit">Save</button>
+</form>
+{% endblock %}
