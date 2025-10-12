@@ -4,20 +4,19 @@ __pycache__/
 *.pyo
 *.pyd
 *.egg-info/
-dist/
-build/
-
-# Virtual env
+.env
 .venv/
+venv/
+.env.*
 
-# SQLite DB
-bookstore.db
-
-# Flask
+# Flask / local data
 instance/
-*.log
+bookstore.db
+*.sqlite
+*.sqlite3
 
-# Editors / OS
-.vscode/
+# OS/Editor
 .DS_Store
 Thumbs.db
+.vscode/
+.idea/
