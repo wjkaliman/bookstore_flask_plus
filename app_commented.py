@@ -1,5 +1,5 @@
 # -------------------------------------------------------------
-# Bookstore "Book Nook" — Flask App (Commented Edition)
+# Bookstore "Book Nook" — Flask App
 # -------------------------------------------------------------
 # Purpose:
 #   A minimal e-commerce style bookstore built with Flask + SQLAlchemy.
@@ -16,7 +16,15 @@
 #   - Show how Decimal avoids floating-point money errors.
 #   - Point out "before_request" seeding (easy for demos; not for prod).
 #   - Note that admin auth is demo-grade (env var or default password).
-# -------------------------------------------------------------
+
+# --- IMPORTS ---------------------------------------------------------------
+# We bring in:
+#   - Flask pieces: routing (@app.route), templates (render_template), sessions, flash
+#   - SQLAlchemy: ORM that maps Python classes (Book, Order, OrderItem) to DB tables
+#   - Decimal: precise currency math (avoid floats for money)
+#   - os/env: simple configuration like the admin password
+# ---------------------------------------------------------------------------
+
 
 from flask import Flask, render_template, redirect, url_for, session, request, flash, abort
 from flask_sqlalchemy import SQLAlchemy
@@ -24,7 +32,13 @@ from sqlalchemy import func
 from decimal import Decimal
 import uuid, os
 
+
+# --- APP INITIALIZATION ----------------------------------------------------
 # Flask app + secret key (used for sessions and flash messaging)
+# Create the Flask app, load config, and wire up extensions (like SQLAlchemy).
+# Everything else—models, helpers, routes—builds on this foundation.
+# ---------------------------------------------------------------------------
+
 app = Flask(__name__)
 app.secret_key = "dev-secret-change-me"  # NOTE: use a real secret in production
 
@@ -36,7 +50,15 @@ DB_PATH = os.path.join(BASE_DIR, "bookstore.db")
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DB_PATH}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+
+# --- CONFIG & PRICING CONSTANTS -------------------------------------------
 # Money-related constants use Decimal to avoid float rounding issues
+# Central knobs for money rules live here (tax, shipping, promos).
+# One source of truth = route code stays simple and consistent.
+# Want to change shipping? Do it here; the rest of the app picks it up.
+# ---------------------------------------------------------------------------
+
+
 TAX_RATE = Decimal("0.0825")            # example tax rate: 8.25%
 SHIPPING_FLAT = Decimal("4.99")         # flat shipping under FREE_SHIPPING_MIN
 FREE_SHIPPING_MIN = Decimal("25.00")    # free shipping threshold
@@ -50,12 +72,22 @@ PROMOS = {
     "FREESHIP": {"type": "freeship"},
 }
 
+
+# --- ORM SETUP -------------------------------------------------------------
 # Initialize SQLAlchemy ORM
+# SQLAlchemy lets us use Python classes/queries instead of raw SQL.
+# It manages connections/transactions and keeps our code readable.
+# ---------------------------------------------------------------------------
+
+
 db = SQLAlchemy(app)
 
 # -----------------------------
 # Database Models
-# -----------------------------
+# One row per catalog item in the storefront. The 'slug' is a clean, human-readable
+# URL key (e.g., /add/the-hobbit) so we don’t expose DB IDs in routes.
+# ---------------------------------------------------------------------------
+
 class Book(db.Model):
     """A single book in the catalog."""
     id = db.Column(db.Integer, primary_key=True)
@@ -65,6 +97,10 @@ class Book(db.Model):
     category = db.Column(db.String(40), nullable=False)  # e.g., "Fiction", "Non-Fiction", "Children's"
     price = db.Column(db.Numeric(10,2), nullable=False)  # use Numeric for currency
     image = db.Column(db.String(200), nullable=True)     # optional path in /static
+
+# --- MODEL: Order ----------------------------------------------------------
+# The “header” for a purchase: who/when/totals. Individual lines live in OrderItem.
+# ---------------------------------------------------------------------------
 
 class Order(db.Model):
     """A customer's order summary (header row)."""
@@ -79,6 +115,11 @@ class Order(db.Model):
     total = db.Column(db.Numeric(10,2), nullable=False)
     promo_code = db.Column(db.String(40), nullable=True)
 
+# --- MODEL: OrderItem ------------------------------------------------------
+# Line items that belong to an Order. We snapshot qty and prices at checkout so
+# past receipts remain accurate even if prices change later.
+# ---------------------------------------------------------------------------
+
 class OrderItem(db.Model):
     """An individual line item belonging to an Order."""
     id = db.Column(db.Integer, primary_key=True)
@@ -88,8 +129,11 @@ class OrderItem(db.Model):
     qty = db.Column(db.Integer, nullable=False)
 
 # -----------------------------
-# Helpers & constants
-# -----------------------------
+# --- HELPERS (Money, Seeding, Cart, Pricing) -------------------------------
+# Helpers keep routes lean. The cart lives in the session (slug → qty) and we enrich
+# it with Book data from the DB when rendering. Pricing stays centralized.
+# ---------------------------------------------------------------------------
+
 CATEGORY_ORDER = ["Fiction", "Non-Fiction", "Children's"]  # used for nav display order
 
 def seed_if_empty():
@@ -134,11 +178,18 @@ def featured_book():
     bk = Book.query.filter_by(slug="sapiens").first()
     return bk or Book.query.first()
 
+# Session cart is a tiny dict {slug: qty}. We fetch full Book details later
+# so we don’t duplicate data in the session.
+
+
 def get_cart():
     """Return the current user's cart (dict of slug -> qty) stored in session.
     session is signed using app.secret_key. It's per-browser/user.
     """
     return session.setdefault("cart", {})
+
+# Build cart rows for templates by joining session entries with Book records
+# and computing line-subtotals.
 
 def cart_items():
     """Materialize cart into (items, subtotal).
@@ -158,6 +209,11 @@ def cart_items():
         subtotal += line_total
         items.append({"book": book, "qty": qty, "line_total": line_total})
     return items, subtotal
+
+
+# Promo engine: apply discount rules from PROMOS. Keeping rules in one dict
+# makes it easy to add or change codes without touching routes.
+
 
 def apply_promo(subtotal, promo_code):
     """Return (discount, message) where discount is a Decimal, message is a user note or None."""
@@ -185,6 +241,10 @@ def apply_promo(subtotal, promo_code):
 
     # fallback for unknown rule types
     return Decimal("0.00"), "Invalid code"
+
+
+# Shipping policy: free above threshold, otherwise flat fee. Centralized here
+# so every total uses the same logic.
 
 def shipping_cost(subtotal, promo_code):
     """Compute shipping. It's free if FREESHIP promo is used or subtotal >= FREE_SHIPPING_MIN."""
@@ -215,6 +275,8 @@ def index():
     """Landing page showing a featured book and top-level categories."""
     feat = featured_book()
     return render_template("index.html", featured=feat, categories=CATEGORY_ORDER)
+
+# Category page: fetch books by category; template renders per-book actions using slugs.
 
 @app.route("/category/<category>")
 def category(category):
@@ -308,6 +370,11 @@ def remove(slug):
         session["cart"] = cart
     flash("Item removed.", "success")
     return redirect(url_for("cart_view"))
+
+
+# Checkout: on POST, snapshot Order + OrderItems (prices as of now), clear cart,
+# and redirect to the receipt so history stays stable.
+
 
 @app.route("/checkout", methods=["GET", "POST"])
 def checkout():
@@ -485,6 +552,7 @@ def admin_delete(book_id):
 
 # -----------------------------
 # Dev entrypoint
+# Run a local dev server for demos
 # -----------------------------
 if __name__ == "__main__":
     # debug=True auto-reloads on file save and shows Flask debugger on errors.
